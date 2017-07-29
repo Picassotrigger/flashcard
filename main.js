@@ -5,11 +5,10 @@ var fs = require("fs");
 
 
 
-
 //=========================   LINK TO FILES   =========================
 var Card = require("./clozeCard.js");
 
-
+var questions = require("./cards.js");
 
 
 
@@ -21,9 +20,7 @@ var partial = "";
 
 var cardArray = [];
 
-
-
-
+var count = 0;
 
 
 
@@ -43,24 +40,23 @@ function mainMenu() {
 
       // Option 1 - Make a new flashcard
       if(answers.mainMenu == "Make a New Flashcard") {
-        console.log("You chose 'Make a New Flashcard'");
+        // console.log("You chose 'Make a New Flashcard'");
         createCard();
       }
 
       // Option 2 - Run flashcards
       if(answers.mainMenu === "Run Flashcards") {
-        console.log("You chose 'Run Flashcards'");
-        readCardFile();
+        // console.log("You chose 'Run Flashcards'");
+        presentQuestion();
       }
 
       // Option 3 - Exit the application
       if(answers.mainMenu === "Exit Application") {
-        console.log("You chose 'Exit Application'");
+        // console.log("You chose 'Exit Application'");
         process.exit();
       }
     });
 }
-
 
 
 
@@ -82,23 +78,23 @@ function createCard() {
   .then(function(answer) {
     // Push content to global variables
     text = answer.text;
-    console.log(answer.text);
-    console.log("text: " + text);
+    // console.log(answer.text);
+    // console.log("text: " + text);
 
     cloze = answer.cloze;
-    console.log(answer.cloze);
-    console.log("cloze: " + cloze);
+    // console.log(answer.cloze);
+    // console.log("cloze: " + cloze);
 
 
     // Take user content and create card object
     var currentCard = new Card(answer.text, answer.cloze);
     partial = currentCard.present;
-    console.log("partial:" + partial);
-    console.log("present:" + currentCard.present);
-    console.log("cloze:" + currentCard.cloze);
+    console.log("The question that will be presented is: " + partial);
+    // console.log("present:" + currentCard.present);
+    console.log("The answer to the question is: " + currentCard.cloze);
 
     // Push new card to cards text file
-    fs.appendFile("cards.txt", JSON.stringify(currentCard) + "\n", function(err) {
+    fs.appendFile("cards.txt", JSON.stringify(currentCard, null, 2) + "\n", function(err) {
       if (err) {
         console.log(err);
       }
@@ -107,7 +103,6 @@ function createCard() {
     cardOrMenu();
   });
 }
-
 
 
 
@@ -133,26 +128,63 @@ function cardOrMenu() {
 
 
 
-
 function readCardFile() {
-  fs.readFile("cards.txt", "utf8", function(err, data) {
+  fs.readFile("cards.js", "utf8", function(err, data) {
     if (err) {
       return console.log(err);
     }
 
-    cardArray = data.toString().split("\n");
+    console.log("data:" + data);
+    console.log("data length:" + data.length);
 
-    for(i in cardArray) {
-      console.log("this is an item: " + cardArray[i]);
-    }
+    var newArray = [];
 
-    for (var key in cardArray) {
-      console.log("A " + key + " is " + cardArray[key] + ".");
-    }
+    cardArray = data.toString().split("{");
+    var arrLength = cardArray.length;
+    console.log("cardArray length: " + arrLength);
+
+    cardArray.forEach(function(item) {
+      newArray.push(item);
+    });
+
+    console.log(newArray);
+    console.log(newArray.length);
+
   });
 }
 
 
+
+function presentQuestion() {
+
+  inquirer
+  .prompt([
+    {
+      type: "input",
+      message: questions.cards[count].present,
+      name: "userAnswer"
+    }
+  ])
+  .then(function(answer){
+    // console.log("answer.useranswer: " + answer.userAnswer);
+    if(answer.userAnswer === questions.cards[count].cloze) {
+      console.log("You got it right");
+    }else {
+      console.log("You got it wrong");
+    }
+
+    count++;
+
+    if(count < 6) {
+      presentQuestion();
+    } else {
+      console.log("That's all there is");
+      count = 0;
+      mainMenu();
+    }
+
+  });
+}
 
 //=========================   MAIN   =========================
 mainMenu();
